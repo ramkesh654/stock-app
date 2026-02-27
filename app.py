@@ -1,15 +1,32 @@
 import streamlit as st
 import yfinance as yf
 
-st.title("Live Stock Price 📈")
+st.set_page_config(page_title="Ramkesh Pro Dashboard", layout="wide")
 
-stock = st.text_input("Enter Stock Symbol (Example: RELIANCE.NS)")
+st.title("📊 Ramkesh Pro Stock Dashboard")
 
-if stock:
-    data = yf.download(stock, period="1mo")
+# Sidebar
+st.sidebar.header("Stock Search")
+symbol = st.sidebar.text_input("Enter NSE Symbol (Example: RELIANCE.NS)")
 
-    st.subheader("Last 5 Days Data")
-    st.write(data.tail())
+if symbol:
 
-    st.subheader("Closing Price Chart")
-    st.line_chart(data["Close"])
+    try:
+        stock = yf.Ticker(symbol)
+        info = stock.info
+        data = stock.history(period="1mo")
+
+        col1, col2, col3 = st.columns(3)
+
+        col1.metric("Current Price", f"₹ {info['currentPrice']}")
+        col2.metric("Day High", f"₹ {info['dayHigh']}")
+        col3.metric("Day Low", f"₹ {info['dayLow']}")
+
+        st.subheader("Company Name")
+        st.write(info.get("longName", "Not Available"))
+
+        st.subheader("1 Month Price Chart")
+        st.line_chart(data["Close"])
+
+    except:
+        st.error("Invalid symbol or data not available")
