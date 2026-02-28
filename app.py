@@ -6,11 +6,11 @@ st.set_page_config(page_title="Ramkesh Pro Dashboard", layout="wide")
 
 st.title("📊 Ramkesh Pro Stock Dashboard")
 
-# -------- Sidebar --------
+# ---------------- Sidebar ----------------
 st.sidebar.header("🔍 Stock Search")
 symbol = st.sidebar.text_input("Enter NSE Symbol (Example: RELIANCE.NS)")
 
-# -------- Market Overview --------
+# ---------------- Market Overview ----------------
 st.header("📈 Market Overview")
 
 nifty = yf.Ticker("^NSEI")
@@ -24,7 +24,7 @@ if not nifty_data.empty:
 
     st.metric("NIFTY 50", f"{round(current_nifty,2)}", f"{round(percent,2)}%")
 
-# -------- Stock Details --------
+# ---------------- Stock Details ----------------
 if symbol:
     try:
         stock = yf.Ticker(symbol)
@@ -47,7 +47,7 @@ if symbol:
     except:
         st.error("Invalid symbol or data not available")
 
-# -------- Top Movers Section --------
+# ---------------- Top Movers ----------------
 st.header("🔥 Top Movers (Sample NSE Stocks)")
 
 stocks = ["RELIANCE.NS","TCS.NS","INFY.NS","HDFCBANK.NS","ICICIBANK.NS"]
@@ -77,3 +77,35 @@ with col2:
     st.subheader("🔻 Losers")
     for l in losers:
         st.write(f"{l[0]}  →  {l[1]} %")
+
+# ---------------- Portfolio Calculator ----------------
+st.header("💼 Portfolio Calculator")
+
+portfolio_symbol = st.text_input("Enter Stock for Portfolio (Example: RELIANCE.NS)")
+quantity = st.number_input("Quantity", min_value=1, step=1)
+buy_price = st.number_input("Buy Price (₹)", min_value=1.0)
+
+if portfolio_symbol:
+    try:
+        current_data = yf.Ticker(portfolio_symbol).history(period="1d")
+        if not current_data.empty:
+            current_price = current_data["Close"].iloc[-1]
+
+            total_investment = quantity * buy_price
+            current_value = quantity * current_price
+            profit_loss = current_value - total_investment
+            percent_change = (profit_loss / total_investment) * 100
+
+            col1, col2, col3 = st.columns(3)
+
+            col1.metric("Current Price", f"₹ {round(current_price,2)}")
+            col2.metric("Total Investment", f"₹ {round(total_investment,2)}")
+            col3.metric("Current Value", f"₹ {round(current_value,2)}")
+
+            if profit_loss >= 0:
+                st.success(f"Profit: ₹ {round(profit_loss,2)} ({round(percent_change,2)}%)")
+            else:
+                st.error(f"Loss: ₹ {round(profit_loss,2)} ({round(percent_change,2)}%)")
+
+    except:
+        st.error("Portfolio data not available")
