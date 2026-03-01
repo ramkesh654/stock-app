@@ -1,5 +1,31 @@
+import streamlit as st
+import yfinance as yf
 import plotly.graph_objects as go
-from datetime import datetime
+
+st.set_page_config(page_title="Ramkesh Pro Dashboard", layout="wide")
+
+st.title("📊 Ramkesh Pro Stock Dashboard")
+
+menu = st.sidebar.selectbox(
+    "Navigation",
+    ["Dashboard", "Stock Analysis"]
+)
+
+# ---------------- DASHBOARD ----------------
+if menu == "Dashboard":
+
+    st.header("📈 Market Overview")
+
+    nifty = yf.Ticker("^NSEI")
+    data = nifty.history(period="1d")
+
+    if not data.empty:
+        current = data["Close"].iloc[-1]
+        open_price = data["Open"].iloc[-1]
+        change = current - open_price
+        percent = (change / open_price) * 100
+
+        st.metric("NIFTY 50", f"{round(current,2)}", f"{round(percent,2)}%")
 
 # ---------------- STOCK ANALYSIS ----------------
 elif menu == "Stock Analysis":
@@ -7,11 +33,10 @@ elif menu == "Stock Analysis":
     symbol = st.text_input("Enter NSE Symbol (Example: RELIANCE.NS)")
 
     if symbol:
-        try:
-            stock = yf.Ticker(symbol)
-            data = stock.history(period="3mo")
+        stock = yf.Ticker(symbol)
+        data = stock.history(period="3mo")
 
-            st.subheader("📊 Candlestick Chart")
+        if not data.empty:
 
             fig = go.Figure(data=[go.Candlestick(
                 x=data.index,
@@ -28,5 +53,5 @@ elif menu == "Stock Analysis":
 
             st.plotly_chart(fig, use_container_width=True)
 
-        except:
+        else:
             st.error("Invalid symbol")
