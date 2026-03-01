@@ -1,5 +1,5 @@
+import plotly.graph_objects as go
 streamlit
 yfinance
 pandas
 numpy
-plotly
