@@ -2,6 +2,10 @@ import streamlit as st
 import yfinance as yf
 import plotly.graph_objects as go
 
+@st.cache_data(ttl=300)
+def get_stock_data(symbol):
+    stock = yf.Ticker(symbol)
+    return stock.history(period="3mo")
 st.set_page_config(page_title="Ramkesh Pro Dashboard", layout="wide")
 
 st.title("📊 Ramkesh Pro Stock Dashboard")
