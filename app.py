@@ -2,14 +2,18 @@ import streamlit as st
 import yfinance as yf
 import plotly.graph_objects as go
 
+st.set_page_config(page_title="Ramkesh Pro Dashboard", layout="wide")
+
+# -------- CACHED FUNCTION (Fixes Rate Limit) --------
 @st.cache_data(ttl=300)
 def get_stock_data(symbol):
     stock = yf.Ticker(symbol)
     return stock.history(period="3mo")
-st.set_page_config(page_title="Ramkesh Pro Dashboard", layout="wide")
 
+# -------- APP TITLE --------
 st.title("📊 Ramkesh Pro Stock Dashboard")
 
+# -------- SIDEBAR --------
 menu = st.sidebar.selectbox(
     "Navigation",
     ["Dashboard", "Stock Analysis"]
@@ -34,13 +38,14 @@ if menu == "Dashboard":
 # ---------------- STOCK ANALYSIS ----------------
 elif menu == "Stock Analysis":
 
-    symbol = st.text_input("Enter NSE Symbol (Example: RELIANCE.NS)")
+    symbol = st.text_input("Enter NSE Symbol (Example: TCS.NS)")
 
     if symbol:
-        stock = yf.Ticker(symbol)
-        data = stock.history(period="3mo")
+        data = get_stock_data(symbol)
 
         if not data.empty:
+
+            st.subheader("📊 Candlestick Chart")
 
             fig = go.Figure(data=[go.Candlestick(
                 x=data.index,
@@ -58,4 +63,4 @@ elif menu == "Stock Analysis":
             st.plotly_chart(fig, use_container_width=True)
 
         else:
-            st.error("Invalid symbol")
+            st.error("Invalid symbol or no data available")
