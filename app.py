@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 
 st.set_page_config(page_title="Ramkesh Pro Dashboard", layout="wide")
 
-# -------- CACHE FUNCTIONS --------
+# ---------------- CACHE ----------------
 @st.cache_data(ttl=600)
 def get_stock_data(symbol):
     stock = yf.Ticker(symbol)
@@ -15,10 +15,27 @@ def get_nifty_data():
     nifty = yf.Ticker("^NSEI")
     return nifty.history(period="1d")
 
-# -------- TITLE --------
+# ---------------- SESSION STATE (Watchlist Storage) ----------------
+if "watchlist" not in st.session_state:
+    st.session_state.watchlist = ["TCS.NS"]
+
+# ---------------- TITLE ----------------
 st.title("📊 Ramkesh Pro Stock Dashboard")
 
-# -------- SIDEBAR --------
+# ---------------- SIDEBAR ----------------
+st.sidebar.header("📌 Watchlist")
+
+new_stock = st.sidebar.text_input("Add Stock (Example: INFY.NS)")
+
+if st.sidebar.button("Add"):
+    if new_stock:
+        st.session_state.watchlist.append(new_stock.upper())
+
+selected_stock = st.sidebar.selectbox(
+    "Select Stock",
+    st.session_state.watchlist
+)
+
 menu = st.sidebar.selectbox(
     "Navigation",
     ["Dashboard", "Stock Analysis"]
@@ -43,38 +60,35 @@ if menu == "Dashboard":
             st.warning("No data available")
 
     except:
-        st.error("Market data temporarily unavailable. Try again later.")
+        st.error("Market data temporarily unavailable")
 
 # ---------------- STOCK ANALYSIS ----------------
 elif menu == "Stock Analysis":
 
-    symbol = st.text_input("Enter NSE Symbol (Example: TCS.NS)")
+    st.header(f"📊 {selected_stock} Analysis")
 
-    if symbol:
-        try:
-            data = get_stock_data(symbol.upper())
+    try:
+        data = get_stock_data(selected_stock)
 
-            if not data.empty:
+        if not data.empty:
 
-                st.subheader("📊 Candlestick Chart")
+            fig = go.Figure(data=[go.Candlestick(
+                x=data.index,
+                open=data['Open'],
+                high=data['High'],
+                low=data['Low'],
+                close=data['Close']
+            )])
 
-                fig = go.Figure(data=[go.Candlestick(
-                    x=data.index,
-                    open=data['Open'],
-                    high=data['High'],
-                    low=data['Low'],
-                    close=data['Close']
-                )])
+            fig.update_layout(
+                xaxis_rangeslider_visible=False,
+                template="plotly_dark"
+            )
 
-                fig.update_layout(
-                    xaxis_rangeslider_visible=False,
-                    template="plotly_dark"
-                )
+            st.plotly_chart(fig, use_container_width=True)
 
-                st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.error("Invalid symbol")
 
-            else:
-                st.error("Invalid symbol or no data available")
-
-        except:
-            st.error("Too many requests. Please wait 5 minutes and try again.")
+    except:
+        st.error("Too many requests. Please wait and try again.")
